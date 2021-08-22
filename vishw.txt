@@ -1,0 +1,80 @@
+#include <SoftwareSerial.h>
+SoftwareSerial blue(0,1);//Rx-2,Tx-3
+#include <HX711.h>
+#include <SimpleDHT.h>//temp and humidity
+#define DOUT 3//weight scale
+#define CLK 2
+HX711 scale(DOUT,CLK);
+int mot1=9;
+int mot2=6;
+int pinDHT11 = 10;//temp and humidity
+int s=0;//for sum of weight 
+int s1=1;//for total weight display
+SimpleDHT11 dht11(pinDHT11);
+int mot3=5;
+void setup()
+{
+  Serial.begin(9600);
+  Serial.println("Press T to tare");
+  scale.set_scale(-96650); //Calibration Factor obtained from first sketch
+  scale.tare(); //Reset the scale to 0 
+  Serial.begin(9600);
+  pinMode(mot1,OUTPUT);
+  pinMode(mot2,OUTPUT);
+  pinMode(mot3,OUTPUT);
+  pinMode(13,INPUT);
+  pinMode(pinDHT11,INPUT);
+}
+void loop() 
+{
+  Serial.print("TOTAL WEIGHT PROCESSED:");
+  Serial.print(scale.get_units());
+  Serial.println(" kg"); //Change this to kg and re-adjust the calibration factor if you follow lbs
+  if(Serial.available())
+  {
+    char temp = Serial.read();
+    if(temp == 't' || temp == 'T')
+    scale.tare(); //Reset the scale to zero 
+  }
+  Serial.println("=================================");
+  Serial.println("Sample DHT11...");
+  
+  // read without samples.
+  byte temperature = 0;
+  byte humidity = 0;
+  int err = SimpleDHTErrSuccess;
+  if ((err = dht11.read(&temperature, &humidity, NULL)) != SimpleDHTErrSuccess) {
+    Serial.print("Read DHT11 failed, err="); Serial.println(err);delay(1000);
+    return;
+  }
+  
+  Serial.print("Sample OK: ");
+  Serial.print((int)temperature); Serial.print(" *C, "); 
+  Serial.print((int)humidity); Serial.println(" H");
+  
+  // DHT11 sampling rate is 1HZ.
+  delay(1500);
+    int button=digitalRead(13);
+    if(button==LOW)
+    {
+      digitalWrite(mot1,HIGH);
+      delay(10000);
+      digitalWrite(mot2,LOW);
+    }
+    int s1=digitalRead(10);
+    if(s1>10)
+    {
+      digitalWrite(mot2,HIGH);
+    }
+    if(s1<10)
+    {
+      digitalWrite(mot2,LOW);
+    }
+    delay(20000);
+    digitalWrite(mot3,HIGH);
+    delay(3000);
+    digitalWrite(mot3,LOW);
+    digitalWrite(mot2,HIGH);
+    delay(120000);
+    digitalWrite(mot2,LOW);
+}
